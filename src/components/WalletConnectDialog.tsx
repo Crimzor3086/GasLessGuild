@@ -311,7 +311,7 @@ export function WalletConnectDialog({ open, onOpenChange }: WalletConnectDialogP
           )}
 
           {/* Other Wallet Options */}
-          {sortedConnectors.length > 0 && (
+          {sortedConnectors.length > 0 ? (
             <>
               {metaMaskConnector && sortedConnectors.length > 1 && (
                 <div className="relative my-4">
