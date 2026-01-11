@@ -69,12 +69,45 @@ export function WalletConnectDialog({ open, onOpenChange }: WalletConnectDialogP
     try {
       await connect({ connector });
     } catch (error: any) {
+      const errorMessage = error?.message?.toLowerCase() || '';
+      const errorCode = error?.code;
+      
+      // Ignore user cancellations
+      if (errorCode === 4001 || errorMessage.includes('user rejected') || errorMessage.includes('user denied')) {
+        setConnectingConnectorId(null);
+        return; // Silent - user cancelled
+      }
+      
+      // Handle authorization errors
+      if (errorMessage.includes('not been authorized') || errorMessage.includes('unauthorized')) {
+        toast({
+          title: "Authorization Required",
+          description: "Please click the MetaMask extension icon and approve the connection request.",
+          variant: "default",
+        });
+        setConnectingConnectorId(null);
+        return;
+      }
+      
+      // Handle network errors
+      if (errorMessage.includes('failed to fetch') || errorCode === -32603) {
+        toast({
+          title: "Network Error",
+          description: "Unable to connect. Please check your connection and try again.",
+          variant: "destructive",
+        });
+        setConnectingConnectorId(null);
+        return;
+      }
+      
+      // Other errors
       console.error('Connection error:', error);
       toast({
         title: "Connection Failed",
         description: error?.message || "Failed to connect wallet. Please make sure MetaMask is unlocked and try again.",
         variant: "destructive",
       });
+      setConnectingConnectorId(null);
     }
   };
 

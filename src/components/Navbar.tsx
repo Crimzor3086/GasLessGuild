@@ -29,23 +29,39 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
   const [copied, setCopied] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
-  // Handle connection errors
+  // Handle connection errors - filter out expected errors
   useEffect(() => {
     if (connectError) {
       const errorMessage = connectError.message.toLowerCase();
-      if (errorMessage.includes('not been authorized') || errorMessage.includes('unauthorized')) {
+      const errorCode = (connectError as any)?.code;
+      
+      // Ignore user cancellations (code 4001) - silent
+      if (errorCode === 4001 || errorMessage.includes('user rejected') || errorMessage.includes('user denied')) {
+        return; // User intentionally cancelled - no need to show error
+      }
+      
+      // Handle authorization errors - show helpful message
+      if (errorMessage.includes('not been authorized') || errorMessage.includes('unauthorized') || errorMessage.includes('not authorized')) {
         toast({
           title: "MetaMask Authorization Required",
-          description: "Please authorize this site in MetaMask. Click the MetaMask extension icon and approve the connection request.",
+          description: "Please click the MetaMask extension icon and approve the connection request to authorize this site.",
           variant: "default",
         });
-      } else if (errorMessage.includes('user rejected') || errorMessage.includes('user denied')) {
+        return;
+      }
+      
+      // Handle network errors
+      if (errorMessage.includes('failed to fetch') || errorCode === -32603) {
         toast({
-          title: "Connection Cancelled",
-          description: "You cancelled the connection request.",
-          variant: "default",
+          title: "Network Error",
+          description: "Unable to connect to the network. Please check your internet connection and try again.",
+          variant: "destructive",
         });
-      } else {
+        return;
+      }
+      
+      // Only show other unexpected errors
+      if (!errorMessage.includes('user') && !errorMessage.includes('authorized')) {
         toast({
           title: "Connection Error",
           description: connectError.message || "Failed to connect wallet. Please try again.",

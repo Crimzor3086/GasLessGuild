@@ -33,6 +33,26 @@ const TaskView = ({ guildAddress }: TaskViewProps) => {
         description: "You've earned your rewards.",
       });
     } catch (error: any) {
+      const errorMessage = error?.message?.toLowerCase() || '';
+      const errorCode = error?.code;
+      
+      // Handle user rejection silently
+      if (errorCode === 4001 || errorMessage.includes('user rejected') || errorMessage.includes('user denied')) {
+        // User cancelled - don't show error
+        return;
+      }
+      
+      // Handle network errors
+      if (errorMessage.includes('failed to fetch') || errorCode === -32603) {
+        toast({
+          title: "Network Error",
+          description: "Unable to submit transaction. Please check your connection and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Handle other errors
       toast({
         title: "Error completing task",
         description: error?.message || "Failed to complete task. Please try again.",
