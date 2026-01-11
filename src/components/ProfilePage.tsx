@@ -1,4 +1,4 @@
-import { Copy, ExternalLink, Award, Check } from "lucide-react";
+import { Copy, ExternalLink, Award, Check, Edit, Twitter, Globe, MessageSquare } from "lucide-react";
 import { Logo } from "./Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import { useAccount } from "wagmi";
 import { useRewardTokenBalance, useRewardNFTs } from "@/hooks/useRewards";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
+import { EditProfileDialog } from "./EditProfileDialog";
+import { useProfile } from "@/hooks/useProfile";
 
 const rarityColors = {
   Legendary: "from-amber-400 to-orange-500",
@@ -20,7 +22,13 @@ const ProfilePage = () => {
   const { address, isConnected } = useAccount();
   const { balance: reputationPoints, isLoading: isLoadingRep } = useRewardTokenBalance();
   const { tokenIds: nftTokenIds, isLoading: isLoadingNFTs } = useRewardNFTs();
+  const { profileData, saveProfile } = useProfile();
   const [copied, setCopied] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+  const handleSaveProfile = (data: typeof profileData) => {
+    saveProfile(data);
+  };
 
   const copyAddress = () => {
     if (address) {
@@ -72,20 +80,67 @@ const ProfilePage = () => {
 
               {/* Info */}
               <div className="flex-1">
-                <h1 className="text-2xl font-bold mb-1">GasLess Guild Member</h1>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <code className="text-sm">{walletAddress}</code>
-                  <button onClick={copyAddress} className="hover:text-primary transition-colors">
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </button>
-                  <a
-                    href={getExplorerUrl(address)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-primary transition-colors"
+                <div className="flex items-center gap-3 mb-2">
+                  <h1 className="text-2xl font-bold">
+                    {profileData.displayName || "GasLess Guild Member"}
+                  </h1>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditDialogOpen(true)}
+                    className="h-8 w-8 p-0"
                   >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                </div>
+                {profileData.bio && (
+                  <p className="text-sm text-muted-foreground mb-2 max-w-2xl">
+                    {profileData.bio}
+                  </p>
+                )}
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <code className="text-sm">{walletAddress}</code>
+                    <button onClick={copyAddress} className="hover:text-primary transition-colors">
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                    <a
+                      href={getExplorerUrl(address)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-primary transition-colors"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  </div>
+                  {profileData.twitter && (
+                    <a
+                      href={`https://twitter.com/${profileData.twitter.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Twitter className="w-4 h-4" />
+                      {profileData.twitter}
+                    </a>
+                  )}
+                  {profileData.discord && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MessageSquare className="w-4 h-4" />
+                      {profileData.discord}
+                    </div>
+                  )}
+                  {profileData.website && (
+                    <a
+                      href={profileData.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      <Globe className="w-4 h-4" />
+                      Website
+                    </a>
+                  )}
                 </div>
               </div>
 
@@ -113,8 +168,90 @@ const ProfilePage = () => {
         </Card>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Badges */}
+          {/* Left Column - Profile Info & Badges */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Profile Information Card */}
+            {(profileData.displayName || profileData.bio || profileData.twitter || profileData.discord || profileData.website) && (
+              <Card variant="glass">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-lg">Profile Information</CardTitle>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditDialogOpen(true)}
+                      className="gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {profileData.bio && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Bio</p>
+                      <p className="text-sm">{profileData.bio}</p>
+                    </div>
+                  )}
+                  {(profileData.twitter || profileData.discord || profileData.website) && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Social Links</p>
+                      <div className="flex flex-wrap gap-3">
+                        {profileData.twitter && (
+                          <a
+                            href={`https://twitter.com/${profileData.twitter.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm"
+                          >
+                            <Twitter className="w-4 h-4" />
+                            {profileData.twitter}
+                          </a>
+                        )}
+                        {profileData.discord && (
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted text-sm">
+                            <MessageSquare className="w-4 h-4" />
+                            {profileData.discord}
+                          </div>
+                        )}
+                        {profileData.website && (
+                          <a
+                            href={profileData.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 transition-colors text-sm"
+                          >
+                            <Globe className="w-4 h-4" />
+                            Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Edit Profile Prompt */}
+            {!profileData.displayName && !profileData.bio && (
+              <Card variant="glass" className="border-dashed">
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Customize your profile to stand out in the GasLess Guilds community!
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditDialogOpen(true)}
+                    className="gap-2"
+                  >
+                    <Edit className="w-4 h-4" />
+                    Edit Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             <div>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Award className="w-5 h-5 text-primary" />
@@ -201,6 +338,13 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+
+      <EditProfileDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleSaveProfile}
+        initialData={profileData}
+      />
     </section>
   );
 };
