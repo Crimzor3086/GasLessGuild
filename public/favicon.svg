@@ -1,0 +1,47 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="logoGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle with gradient -->
+  <circle cx="60" cy="60" r="56" fill="url(#logoGradient)" opacity="0.2"/>
+  
+  <!-- Main shield/guild symbol -->
+  <path d="M60 20 L85 30 L85 55 C85 70 75 80 60 85 C45 80 35 70 35 55 L35 30 Z" 
+        fill="url(#logoGradient)" 
+        filter="url(#glow)"
+        stroke="url(#logoGradient2)" 
+        stroke-width="2"/>
+  
+  <!-- Inner decorative elements - representing community/guild -->
+  <circle cx="60" cy="50" r="8" fill="url(#logoGradient2)" opacity="0.8"/>
+  
+  <!-- Small circles representing members -->
+  <circle cx="50" cy="45" r="3" fill="url(#logoGradient2)"/>
+  <circle cx="70" cy="45" r="3" fill="url(#logoGradient2)"/>
+  <circle cx="55" cy="60" r="3" fill="url(#logoGradient2)"/>
+  <circle cx="65" cy="60" r="3" fill="url(#logoGradient2)"/>
+  
+  <!-- Chain/blockchain representation -->
+  <path d="M45 35 L50 30 M70 30 L75 35" 
+        stroke="url(#logoGradient2)" 
+        stroke-width="2" 
+        stroke-linecap="round"/>
+  <circle cx="47.5" cy="32.5" r="2" fill="url(#logoGradient2)"/>
+  <circle cx="72.5" cy="32.5" r="2" fill="url(#logoGradient2)"/>
+</svg>
+

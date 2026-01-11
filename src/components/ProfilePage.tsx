@@ -1,4 +1,5 @@
-import { Copy, ExternalLink, Award, Star, Zap, Shield, Crown, Check } from "lucide-react";
+import { Copy, ExternalLink, Award, Check } from "lucide-react";
+import { Logo } from "./Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -65,10 +66,8 @@ const ProfilePage = () => {
           <CardContent className="relative pt-0 pb-6">
             <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-12">
               {/* Avatar */}
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-secondary p-0.5 shadow-glow-strong">
-                <div className="w-full h-full rounded-2xl bg-card flex items-center justify-center">
-                  <span className="text-3xl font-bold gradient-text">GG</span>
-                </div>
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-secondary p-0.5 shadow-glow-strong flex items-center justify-center">
+                <Logo size={80} />
               </div>
 
               {/* Info */}

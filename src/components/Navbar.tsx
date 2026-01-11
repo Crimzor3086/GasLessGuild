@@ -1,7 +1,7 @@
 import { Wallet, Copy, Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Logo } from "./Logo";
 
 interface NavbarProps {
   onNavigate: (page: string) => void;
@@ -49,10 +50,8 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-glass-border">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-glow">
-              <span className="text-primary-foreground font-bold text-lg">G</span>
-            </div>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate("home")}>
+            <Logo size={40} className="drop-shadow-lg" />
             <span className="text-xl font-bold gradient-text">GasLess Guilds</span>
           </div>
 
