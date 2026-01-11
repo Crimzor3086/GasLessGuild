@@ -27,6 +27,7 @@ contract GuildFactory {
     }
 
     event GuildCreated(address indexed guildAddress, string name, address indexed master);
+    event GuildRemoved(address indexed guildAddress, address indexed master);
 
     constructor(address _rewardToken, address _rewardNFT) {
         rewardToken = _rewardToken;
@@ -108,6 +109,37 @@ contract GuildFactory {
      */
     function getGuildCount() external view returns (uint256) {
         return guilds.length;
+    }
+
+    /**
+     * @dev Remove a guild (only by the guild master)
+     * Note: This doesn't delete the guild contract, just removes it from the factory's list
+     */
+    function removeGuild(address guildAddress) external {
+        require(isGuild[guildAddress], "GuildFactory: Invalid guild address");
+        GuildInfo memory info = guildInfo[guildAddress];
+        require(info.master == msg.sender, "GuildFactory: Only the guild master can remove the guild");
+        
+        // Remove from mapping
+        isGuild[guildAddress] = false;
+        
+        // Remove from array (swap with last element and pop)
+        for (uint256 i = 0; i < guilds.length; i++) {
+            if (guilds[i] == guildAddress) {
+                guilds[i] = guilds[guilds.length - 1];
+                guilds.pop();
+                break;
+            }
+        }
+        
+        // Remove guild info
+        delete guildInfo[guildAddress];
+        
+        // Remove minter permissions
+        RewardToken(rewardToken).removeMinter(guildAddress);
+        RewardNFT(rewardNFT).removeMinter(guildAddress);
+        
+        emit GuildRemoved(guildAddress, msg.sender);
     }
 }
 

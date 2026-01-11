@@ -45,8 +45,10 @@ contract RewardNFT is ERC721URIStorage, Ownable {
 
     /**
      * @dev Remove an authorized minter
+     * Can be called by owner or factory
      */
-    function removeMinter(address minter) external onlyOwner {
+    function removeMinter(address minter) external {
+        require(msg.sender == owner() || msg.sender == factory, "RewardNFT: Not authorized");
         authorizedMinters[minter] = false;
         emit MinterRemoved(minter);
     }

@@ -4,24 +4,45 @@ import { Address } from 'viem'
 
 export function useGuildFactory() {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({
     hash,
   })
 
   const createGuild = async (name: string, description: string, category: string) => {
-    return writeContract({
-      address: GUILD_FACTORY_ADDRESS as Address,
-      abi: GUILD_FACTORY_ABI,
-      functionName: 'createGuild',
-      args: [name, description, category],
-    })
+    try {
+      const txHash = await writeContract({
+        address: GUILD_FACTORY_ADDRESS as Address,
+        abi: GUILD_FACTORY_ABI,
+        functionName: 'createGuild',
+        args: [name, description, category],
+      })
+      return txHash
+    } catch (err) {
+      // Re-throw to let the component handle it
+      throw err
+    }
+  }
+
+  const removeGuild = async (guildAddress: Address) => {
+    try {
+      const txHash = await writeContract({
+        address: GUILD_FACTORY_ADDRESS as Address,
+        abi: GUILD_FACTORY_ABI,
+        functionName: 'removeGuild',
+        args: [guildAddress],
+      })
+      return txHash
+    } catch (err) {
+      throw err
+    }
   }
 
   return {
     createGuild,
+    removeGuild,
     isPending: isPending || isConfirming,
     isSuccess: isConfirmed,
-    error,
+    error: error || receiptError,
     hash,
   }
 }

@@ -38,8 +38,10 @@ contract RewardToken is ERC20, Ownable {
 
     /**
      * @dev Remove an authorized minter
+     * Can be called by owner or factory
      */
-    function removeMinter(address minter) external onlyOwner {
+    function removeMinter(address minter) external {
+        require(msg.sender == owner() || msg.sender == factory, "RewardToken: Not authorized");
         authorizedMinters[minter] = false;
         emit MinterRemoved(minter);
     }

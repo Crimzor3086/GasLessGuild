@@ -38,6 +38,13 @@ export const GUILD_FACTORY_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
+  {
+    inputs: [{ name: 'guildAddress', type: 'address' }],
+    name: 'removeGuild',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
 ] as const
 
 // Guild ABI

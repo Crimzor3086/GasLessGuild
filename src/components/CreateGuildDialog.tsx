@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useGuildFactory } from "@/hooks/useGuilds";
 import { useAccount } from "wagmi";
 import {
@@ -58,16 +58,15 @@ export function CreateGuildDialog({ onSuccess }: CreateGuildDialogProps) {
     }
 
     try {
-      await createGuild(name, description, category);
-      toast({
-        title: "Guild created!",
-        description: "Your guild has been created successfully.",
-      });
-      setName("");
-      setDescription("");
-      setCategory("");
-      setOpen(false);
-      onSuccess?.();
+      const hash = await createGuild(name, description, category);
+      // Wait for transaction confirmation
+      if (hash) {
+        // Transaction submitted successfully - wait for confirmation
+        // The success toast will be shown when isSuccess becomes true
+        setName("");
+        setDescription("");
+        setCategory("");
+      }
     } catch (error: any) {
       const errorMessage = error?.message?.toLowerCase() || '';
       const errorCode = error?.code;
@@ -97,9 +96,17 @@ export function CreateGuildDialog({ onSuccess }: CreateGuildDialogProps) {
     }
   };
 
-  if (isSuccess && open) {
-    setOpen(false);
-  }
+  // Show success toast and close dialog when transaction is confirmed
+  useEffect(() => {
+    if (isSuccess && open) {
+      toast({
+        title: "Guild created!",
+        description: "Your guild has been created successfully.",
+      });
+      setOpen(false);
+      onSuccess?.();
+    }
+  }, [isSuccess, open, onSuccess]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
