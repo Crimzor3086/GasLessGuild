@@ -128,11 +128,36 @@ export function CreateTaskDialog({ guildAddress, onSuccess }: CreateTaskDialogPr
         return; // User cancelled
       }
       
-      // Handle network errors
-      if (errorMessage.includes('failed to fetch') || errorCode === -32603) {
+      // Check if error message already contains helpful information
+      if (error?.message && (
+        error.message.includes('guild master') ||
+        error.message.includes('permission') ||
+        error.message.includes('owner') ||
+        error.message.includes('would revert')
+      )) {
+        toast({
+          title: "Permission Denied",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Handle network errors (but not contract revert "Failed to fetch")
+      if ((errorMessage.includes('failed to fetch') && !errorMessage.includes('contract')) || errorCode === -32603) {
         toast({
           title: "Network Error",
           description: "Unable to submit transaction. Please check your connection and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Handle contract revert errors
+      if (errorMessage.includes('failed to fetch') || errorMessage.includes('revert') || errorMessage.includes('reverted')) {
+        toast({
+          title: "Transaction Failed",
+          description: error?.message || "The transaction would revert. Please verify you are the guild master and try again.",
           variant: "destructive",
         });
         return;

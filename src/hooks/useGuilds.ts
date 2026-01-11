@@ -148,13 +148,25 @@ export function useGuild(guildAddress: Address | undefined) {
         args: [title, description, rewardPoints, rewardNFT],
       })
     } catch (err: any) {
-      const errorMessage = err?.message || err?.toString() || 'Unknown error'
-      if (errorMessage.includes('execution reverted') || errorMessage.includes('revert')) {
-        if (errorMessage.includes('onlyOwner') || errorMessage.includes('Ownable')) {
-          throw new Error('Only the guild master can create tasks')
-        }
-        throw new Error('Transaction would revert. Please verify you are the guild master.')
+      const errorMessage = err?.message || err?.toString() || ''
+      const errorDetails = err?.details || err?.data?.message || ''
+      const fullError = (errorMessage + ' ' + errorDetails).toLowerCase()
+      
+      // Check for permission errors (onlyOwner modifier)
+      if (
+        fullError.includes('onlyowner') || 
+        fullError.includes('ownable') ||
+        fullError.includes('not the owner') ||
+        fullError.includes('caller is not the owner')
+      ) {
+        throw new Error('Only the guild master can create tasks. Please verify you are the owner of this guild.')
       }
+      
+      // Check for revert errors
+      if (fullError.includes('execution reverted') || fullError.includes('revert') || fullError.includes('failed to fetch')) {
+        throw new Error('Transaction would revert. Please verify you are the guild master and have permission to create tasks.')
+      }
+      
       throw err
     }
   }
