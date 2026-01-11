@@ -47,6 +47,17 @@ export function GuildCard({ guildAddress, onClick, index }: GuildCardProps) {
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
+    
+    // Double-check that user is the master before attempting transaction
+    if (!address || !isMaster) {
+      toast({
+        title: "Permission Denied",
+        description: "Only the guild master can remove this guild.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await removeGuild(guildAddress);
     } catch (error: any) {
@@ -55,6 +66,16 @@ export function GuildCard({ guildAddress, onClick, index }: GuildCardProps) {
       
       if (errorCode === 4001 || errorMessage.includes('user rejected') || errorMessage.includes('user denied')) {
         return; // User cancelled
+      }
+      
+      // Check for gas estimation errors (extremely high gas fees usually indicate this)
+      if (errorMessage.includes('gas') || errorMessage.includes('estimation') || errorCode === -32000 || errorMessage.includes('revert')) {
+        toast({
+          title: "Transaction Would Revert",
+          description: "The transaction cannot be executed. This usually means the contracts need to be re-deployed with the updated removeMinter functions that allow the factory to revoke minter permissions. Please check the deployment notes.",
+          variant: "destructive",
+        });
+        return;
       }
       
       if (errorMessage.includes('failed to fetch') || errorCode === -32603) {
@@ -66,6 +87,7 @@ export function GuildCard({ guildAddress, onClick, index }: GuildCardProps) {
         return;
       }
       
+      // Show the actual error message if it's helpful
       toast({
         title: "Error removing guild",
         description: error?.message || "Failed to remove guild. Please try again.",

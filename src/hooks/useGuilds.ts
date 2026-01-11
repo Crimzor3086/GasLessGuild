@@ -30,9 +30,26 @@ export function useGuildFactory() {
         abi: GUILD_FACTORY_ABI,
         functionName: 'removeGuild',
         args: [guildAddress],
+        // Add gas estimation override to prevent issues
+        gas: undefined, // Let wagmi estimate, but we'll catch errors
       })
       return txHash
-    } catch (err) {
+    } catch (err: any) {
+      // Provide more helpful error messages
+      const errorMessage = err?.message || err?.toString() || 'Unknown error'
+      if (errorMessage.includes('execution reverted') || errorMessage.includes('revert')) {
+        // Try to extract the revert reason
+        if (errorMessage.includes('Only the guild master')) {
+          throw new Error('Only the guild master can remove this guild')
+        }
+        if (errorMessage.includes('Invalid guild address')) {
+          throw new Error('Invalid guild address')
+        }
+        if (errorMessage.includes('Not authorized')) {
+          throw new Error('Contract authorization error. The contracts may need to be re-deployed with updated permissions.')
+        }
+        throw new Error('Transaction would revert. Please verify you are the guild master and the contracts are properly configured.')
+      }
       throw err
     }
   }
