@@ -64,9 +64,18 @@ export function WalletConnectDialog({ open, onOpenChange }: WalletConnectDialogP
     return `${explorerBase}/address/${addr}`;
   };
 
-  const handleConnect = (connector: any) => {
+  const handleConnect = async (connector: any) => {
     setConnectingConnectorId(connector.uid);
-    connect({ connector });
+    try {
+      await connect({ connector });
+    } catch (error: any) {
+      console.error('Connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: error?.message || "Failed to connect wallet. Please make sure MetaMask is unlocked and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Close dialog when connection succeeds

@@ -1,14 +1,16 @@
 import { createConfig, http } from 'wagmi'
 import { arbitrum, arbitrumSepolia } from 'wagmi/chains'
-import { injected, metaMask, walletConnect } from '@wagmi/connectors'
+import { injected, walletConnect } from '@wagmi/connectors'
 
 // Get Reown (formerly WalletConnect) project ID from environment
 // Get your project ID from https://cloud.reown.com
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'default-project-id'
 
-// Build connectors array
+// Build connectors array - use injected first to avoid constructor issues
 const connectors = [
-  metaMask(),
+  injected({
+    target: 'metaMask',
+  }),
   injected(),
 ]
 

@@ -24,14 +24,42 @@ interface NavbarProps {
 const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { connect, connectors, isPending } = useConnect();
+  const { connect, connectors, isPending, error: connectError } = useConnect();
   const chainId = useChainId();
   const [copied, setCopied] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
-  // Get MetaMask connector
+  // Handle connection errors
+  useEffect(() => {
+    if (connectError) {
+      const errorMessage = connectError.message.toLowerCase();
+      if (errorMessage.includes('not been authorized') || errorMessage.includes('unauthorized')) {
+        toast({
+          title: "MetaMask Authorization Required",
+          description: "Please authorize this site in MetaMask. Click the MetaMask extension icon and approve the connection request.",
+          variant: "default",
+        });
+      } else if (errorMessage.includes('user rejected') || errorMessage.includes('user denied')) {
+        toast({
+          title: "Connection Cancelled",
+          description: "You cancelled the connection request.",
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Connection Error",
+          description: connectError.message || "Failed to connect wallet. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [connectError]);
+
+  // Get MetaMask connector - check multiple possible IDs
   const metaMaskConnector = connectors.find((c) => 
-    c.name.toLowerCase().includes("metamask") || c.id === "io.metamask"
+    c.id === "io.metamask" ||
+    c.id === "metaMaskSDK" ||
+    (c.name && c.name.toLowerCase().includes("metamask"))
   );
 
   // Check if MetaMask is installed
@@ -39,7 +67,7 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
     (window.ethereum?.isMetaMask || (window as any).ethereum?.providers?.some((p: any) => p.isMetaMask));
 
   // Direct MetaMask connection handler
-  const handleMetaMaskConnect = () => {
+  const handleMetaMaskConnect = async () => {
     if (!isMetaMaskInstalled) {
       toast({
         title: "MetaMask Not Found",
@@ -50,11 +78,31 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
       return;
     }
 
-    if (metaMaskConnector && metaMaskConnector.ready) {
-      connect({ connector: metaMaskConnector });
-    } else {
-      // Fallback to dialog if MetaMask connector not found or not ready
-      setWalletDialogOpen(true);
+    try {
+      // Find MetaMask connector (could be injected with target: 'metaMask' or metaMask())
+      const connector = metaMaskConnector || connectors.find((c) => 
+        c.id === 'io.metamask' || 
+        (c.name && c.name.toLowerCase().includes('metamask'))
+      );
+
+      if (connector) {
+        await connect({ connector });
+      } else {
+        // Fallback: try to connect with injected connector
+        const injectedConnector = connectors.find((c) => c.id === 'injected');
+        if (injectedConnector) {
+          await connect({ connector: injectedConnector });
+        } else {
+          setWalletDialogOpen(true);
+        }
+      }
+    } catch (error: any) {
+      console.error('Connection error:', error);
+      toast({
+        title: "Connection Failed",
+        description: error?.message || "Failed to connect to MetaMask. Please try again or check if MetaMask is unlocked.",
+        variant: "destructive",
+      });
     }
   };
 
