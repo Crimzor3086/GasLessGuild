@@ -9,9 +9,9 @@ const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'default-proj
 export const config = createConfig({
   chains: [arbitrum, arbitrumSepolia],
   connectors: [
-    injected(),
-    metaMask(),
-    walletConnect({ projectId }),
+    metaMask(), // MetaMask first - primary connector
+    injected(), // Fallback for other injected wallets
+    walletConnect({ projectId }), // Mobile wallet support
   ],
   transports: {
     [arbitrum.id]: http(),

@@ -288,46 +288,78 @@ export function WalletConnectDialog({ open, onOpenChange }: WalletConnectDialogP
             </div>
           )}
 
-          {/* Wallet Options */}
-          {sortedConnectors.length > 0 ? (
-            <div className="space-y-2">
-              {sortedConnectors.map((connector) => {
-                const isConnecting = isPending && connectingConnectorId === connector.uid;
-                const isMetaMask = connector.name.toLowerCase().includes("metamask");
-                
-                return (
-                  <Button
-                    key={connector.uid}
-                    variant="outline"
-                    className="w-full justify-start h-auto py-4 px-4 hover:bg-primary/5 transition-colors"
-                    onClick={() => handleConnect(connector)}
-                    disabled={isPending || !connector.ready}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{getWalletIcon(connector.name)}</span>
-                        <div className="text-left">
-                          <p className="font-medium">{connector.name}</p>
-                          {isMetaMask && isMetaMaskInstalled && (
-                            <p className="text-xs text-muted-foreground">
-                              Recommended
-                            </p>
-                          )}
-                          {!connector.ready && (
-                            <p className="text-xs text-amber-500">
-                              Not available
-                            </p>
+          {/* Primary MetaMask Button */}
+          {isMetaMaskInstalled && metaMaskConnector && metaMaskConnector.ready && (
+            <Button
+              variant="default"
+              size="lg"
+              className="w-full h-auto py-4 px-4 bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600"
+              onClick={() => handleConnect(metaMaskConnector)}
+              disabled={isPending}
+            >
+              <div className="flex items-center justify-center gap-3 w-full">
+                <span className="text-2xl">🦊</span>
+                <div className="text-left">
+                  <p className="font-semibold">Connect with MetaMask</p>
+                  <p className="text-xs opacity-90">Recommended wallet</p>
+                </div>
+                {isPending && connectingConnectorId === metaMaskConnector.uid && (
+                  <Loader2 className="w-4 h-4 animate-spin ml-auto" />
+                )}
+              </div>
+            </Button>
+          )}
+
+          {/* Other Wallet Options */}
+          {sortedConnectors.length > 0 && (
+            <>
+              {metaMaskConnector && sortedConnectors.length > 1 && (
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or connect with
+                    </span>
+                  </div>
+                </div>
+              )}
+              <div className="space-y-2">
+                {sortedConnectors
+                  .filter((c) => !(c.name.toLowerCase().includes("metamask") && isMetaMaskInstalled))
+                  .map((connector) => {
+                    const isConnecting = isPending && connectingConnectorId === connector.uid;
+                    
+                    return (
+                      <Button
+                        key={connector.uid}
+                        variant="outline"
+                        className="w-full justify-start h-auto py-4 px-4 hover:bg-primary/5 transition-colors"
+                        onClick={() => handleConnect(connector)}
+                        disabled={isPending || !connector.ready}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{getWalletIcon(connector.name)}</span>
+                            <div className="text-left">
+                              <p className="font-medium">{connector.name}</p>
+                              {!connector.ready && (
+                                <p className="text-xs text-amber-500">
+                                  Not available
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {isConnecting && (
+                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
                           )}
                         </div>
-                      </div>
-                      {isConnecting && (
-                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      )}
-                    </div>
-                  </Button>
-                );
-              })}
-            </div>
+                      </Button>
+                    );
+                  })}
+              </div>
+            </>
           ) : (
             <div className="p-4 rounded-lg bg-muted/50 text-center">
               <p className="text-sm text-muted-foreground">

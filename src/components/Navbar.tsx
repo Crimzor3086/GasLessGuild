@@ -1,8 +1,8 @@
-import { Wallet, Copy, Check, ExternalLink } from "lucide-react";
+import { Wallet, Copy, Check, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAccount, useDisconnect, useChainId } from "wagmi";
+import { useAccount, useDisconnect, useChainId, useConnect } from "wagmi";
 import { arbitrum, arbitrumSepolia } from "wagmi/chains";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import {
 import { Logo } from "./Logo";
 import { WalletConnectDialog } from "./WalletConnectDialog";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
 
 interface NavbarProps {
   onNavigate: (page: string) => void;
@@ -23,9 +24,39 @@ interface NavbarProps {
 const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
+  const { connect, connectors, isPending } = useConnect();
   const chainId = useChainId();
   const [copied, setCopied] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
+
+  // Get MetaMask connector
+  const metaMaskConnector = connectors.find((c) => 
+    c.name.toLowerCase().includes("metamask") || c.id === "io.metamask"
+  );
+
+  // Check if MetaMask is installed
+  const isMetaMaskInstalled = typeof window !== "undefined" && 
+    (window.ethereum?.isMetaMask || (window as any).ethereum?.providers?.some((p: any) => p.isMetaMask));
+
+  // Direct MetaMask connection handler
+  const handleMetaMaskConnect = () => {
+    if (!isMetaMaskInstalled) {
+      toast({
+        title: "MetaMask Not Found",
+        description: "Please install MetaMask to connect your wallet.",
+        variant: "destructive",
+      });
+      window.open("https://metamask.io/download", "_blank");
+      return;
+    }
+
+    if (metaMaskConnector && metaMaskConnector.ready) {
+      connect({ connector: metaMaskConnector });
+    } else {
+      // Fallback to dialog if MetaMask connector not found or not ready
+      setWalletDialogOpen(true);
+    }
+  };
 
   const navItems = [
     { id: "home", label: "Home" },
@@ -37,6 +68,16 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
+
+  // Show success toast when connected
+  useEffect(() => {
+    if (isConnected && address) {
+      toast({
+        title: "Wallet Connected! 🎉",
+        description: `Successfully connected to ${formatAddress(address)}`,
+      });
+    }
+  }, [isConnected, address]);
 
   const copyAddress = () => {
     if (address) {
@@ -86,21 +127,94 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
                 Wrong Network
               </Badge>
             )}
-            <Button
-              variant="outline"
-              size="default"
-              className="gap-2"
-              onClick={() => setWalletDialogOpen(true)}
-            >
-              <Wallet className="w-4 h-4" />
-              {isConnected && address ? (
-                <span className="hidden sm:inline">{formatAddress(address)}</span>
-              ) : (
-                <span className="hidden sm:inline">Connect Wallet</span>
-              )}
-            </Button>
+            {isConnected && address ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="default" className="gap-2">
+                    <Wallet className="w-4 h-4" />
+                    <span className="hidden sm:inline">{formatAddress(address)}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={copyAddress} className="cursor-pointer">
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Address
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a
+                      href={getExplorerUrl(address)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center cursor-pointer"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      View on Arbiscan
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      disconnect();
+                      toast({
+                        title: "Wallet disconnected",
+                        description: "You have been disconnected from GasLess Guilds.",
+                      });
+                    }} 
+                    className="cursor-pointer text-destructive"
+                  >
+                    Disconnect
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="default"
+                  size="default"
+                  className="gap-2"
+                  onClick={handleMetaMaskConnect}
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="hidden sm:inline">Connecting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-lg">🦊</span>
+                      <span className="hidden sm:inline">
+                        {isMetaMaskInstalled ? "Connect MetaMask" : "Connect Wallet"}
+                      </span>
+                    </>
+                  )}
+                </Button>
+                {isMetaMaskInstalled && (
+                  <Button
+                    variant="ghost"
+                    size="default"
+                    className="gap-2"
+                    onClick={() => setWalletDialogOpen(true)}
+                  >
+                    <span className="text-xs">⋯</span>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
+          {/* Show dialog for other wallet options or if MetaMask connection fails */}
           <WalletConnectDialog
             open={walletDialogOpen}
             onOpenChange={setWalletDialogOpen}
