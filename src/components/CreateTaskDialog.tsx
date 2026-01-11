@@ -26,7 +26,7 @@ interface CreateTaskDialogProps {
 
 export function CreateTaskDialog({ guildAddress, onSuccess }: CreateTaskDialogProps) {
   const { isConnected, address } = useAccount();
-  const { createTask, isPending, isSuccess } = useGuild(guildAddress);
+  const { createTask, isPending, isSuccess, isError, error } = useGuild(guildAddress);
   const { guildInfo } = useGuildInfo(guildAddress);
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -51,6 +51,27 @@ export function CreateTaskDialog({ guildAddress, onSuccess }: CreateTaskDialogPr
       onSuccess?.();
     }
   }, [isSuccess, open, onSuccess]);
+
+  // Show error toast if transaction fails after submission
+  useEffect(() => {
+    if (isError && error && open) {
+      const errorMessage = error?.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('reverted') || errorMessage.includes('revert')) {
+        toast({
+          title: "Transaction Failed",
+          description: error.message || "The transaction was reverted on-chain. Please verify you are the guild master and try again.",
+          variant: "destructive",
+        });
+      } else if (!errorMessage.includes('user rejected') && !errorMessage.includes('user denied')) {
+        toast({
+          title: "Transaction Error",
+          description: error.message || "The transaction failed. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [isError, error, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

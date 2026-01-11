@@ -54,13 +54,18 @@ export function useGuildFactory() {
     }
   }
 
+  // Check if transaction failed after submission (status: 0 = failed, 1 = success)
+  const transactionFailed = receipt && receipt.status === 0
+
   return {
     createGuild,
     removeGuild,
     isPending: isPending || isConfirming,
-    isSuccess: isConfirmed,
-    error: error || receiptError,
+    isSuccess: isConfirmed && !transactionFailed,
+    isError: transactionFailed || !!error || !!receiptError,
+    error: error || receiptError || (transactionFailed ? new Error('Transaction reverted on-chain') : undefined),
     hash,
+    receipt,
   }
 }
 
@@ -109,47 +114,91 @@ export function useGuildInfo(guildAddress: Address | undefined) {
 
 export function useGuild(guildAddress: Address | undefined) {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError, data: receipt } = useWaitForTransactionReceipt({
     hash,
   })
 
   const joinGuild = async () => {
     if (!guildAddress) return
-    return writeContract({
-      address: guildAddress,
-      abi: GUILD_ABI,
-      functionName: 'joinGuild',
-    })
+    try {
+      return await writeContract({
+        address: guildAddress,
+        abi: GUILD_ABI,
+        functionName: 'joinGuild',
+      })
+    } catch (err: any) {
+      const errorMessage = err?.message || err?.toString() || 'Unknown error'
+      if (errorMessage.includes('execution reverted') || errorMessage.includes('revert')) {
+        if (errorMessage.includes('Already a member')) {
+          throw new Error('You are already a member of this guild')
+        }
+        throw new Error('Transaction would revert. Please check if you are already a member.')
+      }
+      throw err
+    }
   }
 
   const createTask = async (title: string, description: string, rewardPoints: bigint, rewardNFT: boolean) => {
     if (!guildAddress) return
-    return writeContract({
-      address: guildAddress,
-      abi: GUILD_ABI,
-      functionName: 'createTask',
-      args: [title, description, rewardPoints, rewardNFT],
-    })
+    try {
+      return await writeContract({
+        address: guildAddress,
+        abi: GUILD_ABI,
+        functionName: 'createTask',
+        args: [title, description, rewardPoints, rewardNFT],
+      })
+    } catch (err: any) {
+      const errorMessage = err?.message || err?.toString() || 'Unknown error'
+      if (errorMessage.includes('execution reverted') || errorMessage.includes('revert')) {
+        if (errorMessage.includes('onlyOwner') || errorMessage.includes('Ownable')) {
+          throw new Error('Only the guild master can create tasks')
+        }
+        throw new Error('Transaction would revert. Please verify you are the guild master.')
+      }
+      throw err
+    }
   }
 
   const completeTask = async (taskId: bigint) => {
     if (!guildAddress) return
-    return writeContract({
-      address: guildAddress,
-      abi: GUILD_ABI,
-      functionName: 'completeTask',
-      args: [taskId],
-    })
+    try {
+      return await writeContract({
+        address: guildAddress,
+        abi: GUILD_ABI,
+        functionName: 'completeTask',
+        args: [taskId],
+      })
+    } catch (err: any) {
+      const errorMessage = err?.message || err?.toString() || 'Unknown error'
+      if (errorMessage.includes('execution reverted') || errorMessage.includes('revert')) {
+        if (errorMessage.includes('Not a member')) {
+          throw new Error('You must be a member of this guild to complete tasks')
+        }
+        if (errorMessage.includes('already completed') || errorMessage.includes('Already completed')) {
+          throw new Error('This task has already been completed')
+        }
+        if (errorMessage.includes('Invalid task ID')) {
+          throw new Error('Invalid task ID')
+        }
+        throw new Error('Transaction would revert. Please verify you are a member and the task is available.')
+      }
+      throw err
+    }
   }
+
+  // Check if transaction failed after submission (status: 0 = failed, 1 = success)
+  const transactionFailed = receipt && receipt.status === 0
 
   return {
     joinGuild,
     createTask,
     completeTask,
     isPending: isPending || isConfirming,
-    isSuccess: isConfirmed,
-    error,
+    isSuccess: isConfirmed && !transactionFailed,
+    isError: transactionFailed || !!error || !!receiptError,
+    error: error || receiptError || (transactionFailed ? new Error('Transaction reverted on-chain') : undefined),
     hash,
+    receipt,
   }
 }
 

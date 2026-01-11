@@ -30,7 +30,7 @@ interface CreateGuildDialogProps {
 
 export function CreateGuildDialog({ onSuccess }: CreateGuildDialogProps) {
   const { isConnected } = useAccount();
-  const { createGuild, isPending, isSuccess } = useGuildFactory();
+  const { createGuild, isPending, isSuccess, isError, error } = useGuildFactory();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -107,6 +107,27 @@ export function CreateGuildDialog({ onSuccess }: CreateGuildDialogProps) {
       onSuccess?.();
     }
   }, [isSuccess, open, onSuccess]);
+
+  // Show error toast if transaction fails after submission
+  useEffect(() => {
+    if (isError && error && open) {
+      const errorMessage = error?.message?.toLowerCase() || '';
+      
+      if (errorMessage.includes('reverted') || errorMessage.includes('revert')) {
+        toast({
+          title: "Transaction Failed",
+          description: error.message || "The transaction was reverted on-chain. Please check your inputs and try again.",
+          variant: "destructive",
+        });
+      } else if (!errorMessage.includes('user rejected') && !errorMessage.includes('user denied')) {
+        toast({
+          title: "Transaction Error",
+          description: error.message || "The transaction failed. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [isError, error, open]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
