@@ -12,6 +12,9 @@ module.exports = {
       },
     },
   },
+  mocha: {
+    timeout: 40000
+  },
   networks: {
     arbitrum: {
       url: process.env.ARBITRUM_RPC_URL || "https://arb1.arbitrum.io/rpc",

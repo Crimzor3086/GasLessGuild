@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 
 /**
  * @title RewardNFT
@@ -12,8 +11,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
  * Only authorized contracts (guilds) can mint NFTs
  */
 contract RewardNFT is ERC721URIStorage, Ownable {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIds;
+    uint256 private _tokenIds;
 
     mapping(address => bool) public authorizedMinters;
     mapping(uint256 => string) public badgeMetadata;
@@ -61,8 +59,8 @@ contract RewardNFT is ERC721URIStorage, Ownable {
     ) external returns (uint256) {
         require(authorizedMinters[msg.sender], "RewardNFT: Not authorized to mint");
         
-        _tokenIds.increment();
-        uint256 newTokenId = _tokenIds.current();
+        _tokenIds++;
+        uint256 newTokenId = _tokenIds;
         
         _mint(to, newTokenId);
         _setTokenURI(newTokenId, tokenURI);
@@ -82,7 +80,7 @@ contract RewardNFT is ERC721URIStorage, Ownable {
         
         // Note: This is inefficient for large token counts
         // In production, consider using EnumerableSet or tracking tokens per owner
-        for (uint256 i = 1; i <= _tokenIds.current(); i++) {
+        for (uint256 i = 1; i <= _tokenIds; i++) {
             if (_ownerOf(i) == owner) {
                 tokens[index] = i;
                 index++;

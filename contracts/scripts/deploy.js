@@ -29,11 +29,11 @@ async function main() {
   const guildFactoryAddress = await guildFactory.getAddress();
   console.log("GuildFactory deployed to:", guildFactoryAddress);
 
-  // Authorize GuildFactory to mint tokens and NFTs
-  console.log("\nAuthorizing GuildFactory as minter...");
-  await rewardToken.addMinter(guildFactoryAddress);
-  await rewardNFT.addMinter(guildFactoryAddress);
-  console.log("Authorization complete");
+  // Set factory address in token contracts so it can authorize new guilds
+  console.log("\nSetting factory address in token contracts...");
+  await rewardToken.setFactory(guildFactoryAddress);
+  await rewardNFT.setFactory(guildFactoryAddress);
+  console.log("Factory address set");
 
   console.log("\n=== Deployment Summary ===");
   console.log("RewardToken:", rewardTokenAddress);
