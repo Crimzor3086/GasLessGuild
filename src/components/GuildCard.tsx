@@ -1,9 +1,9 @@
-import { Users, ArrowUpRight, Trash2 } from "lucide-react";
+import { Users, ArrowUpRight, Trash2, Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useGuildInfo, useGuildFactory } from "@/hooks/useGuilds";
+import { useGuildInfo, useGuildFactory, useMemberReputation } from "@/hooks/useGuilds";
 import { useAccount } from "wagmi";
 import { Address } from "viem";
 import { toast } from "@/hooks/use-toast";
@@ -30,6 +30,7 @@ export function GuildCard({ guildAddress, onClick, index }: GuildCardProps) {
   const { guildInfo, isLoading } = useGuildInfo(guildAddress);
   const { address } = useAccount();
   const { removeGuild, isPending: isRemoving, isSuccess: isRemoved } = useGuildFactory();
+  const { reputation: guildReputation, isLoading: isLoadingRep } = useMemberReputation(guildAddress, address);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const isMaster = guildInfo?.master?.toLowerCase() === address?.toLowerCase();
@@ -188,6 +189,16 @@ export function GuildCard({ guildAddress, onClick, index }: GuildCardProps) {
                 <Users className="w-4 h-4" />
                 {memberCount} members
               </span>
+              {address && (
+                <span className="flex items-center gap-1 text-primary font-medium">
+                  <Coins className="w-4 h-4" />
+                  {isLoadingRep ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    `${guildReputation.toLocaleString()} REP`
+                  )}
+                </span>
+              )}
             </div>
           </div>
         </div>

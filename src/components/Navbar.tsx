@@ -1,8 +1,9 @@
-import { Wallet, Copy, Check, ExternalLink, Loader2 } from "lucide-react";
+import { Wallet, Copy, Check, ExternalLink, Loader2, Coins, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAccount, useDisconnect, useChainId, useConnect } from "wagmi";
 import { arbitrum, arbitrumSepolia } from "wagmi/chains";
 import { useState, useEffect } from "react";
+import { useRewardTokenBalance, useRewardNFTs } from "@/hooks/useRewards";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,8 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
   const chainId = useChainId();
   const [copied, setCopied] = useState(false);
   const [walletDialogOpen, setWalletDialogOpen] = useState(false);
+  const { balance: repBalance, isLoading: isLoadingRep } = useRewardTokenBalance();
+  const { tokenIds: nftTokenIds, isLoading: isLoadingNFTs } = useRewardNFTs();
 
   // Handle connection errors - filter out expected errors
   useEffect(() => {
@@ -199,8 +202,37 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
                     <span className="hidden sm:inline">{formatAddress(address)}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  {/* Balance Display */}
+                  <div className="px-2 py-3 space-y-2 border-b">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Coins className="w-4 h-4 text-primary" />
+                        <span>REP Balance</span>
+                      </div>
+                      <span className="font-semibold text-primary">
+                        {isLoadingRep ? (
+                          <Loader2 className="w-3 h-3 animate-spin inline" />
+                        ) : (
+                          repBalance.toLocaleString()
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <ImageIcon className="w-4 h-4 text-secondary" />
+                        <span>NFT Badges</span>
+                      </div>
+                      <span className="font-semibold text-foreground">
+                        {isLoadingNFTs ? (
+                          <Loader2 className="w-3 h-3 animate-spin inline" />
+                        ) : (
+                          nftTokenIds.length
+                        )}
+                      </span>
+                    </div>
+                  </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={copyAddress} className="cursor-pointer">
                     {copied ? (

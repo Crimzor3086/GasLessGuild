@@ -10,6 +10,7 @@ import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { EditProfileDialog } from "./EditProfileDialog";
 import { useProfile } from "@/hooks/useProfile";
+import { RewardsSummary } from "./RewardsSummary";
 
 const rarityColors = {
   Legendary: "from-amber-400 to-orange-500",
@@ -166,6 +167,9 @@ const ProfilePage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Rewards Summary */}
+        <RewardsSummary />
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Profile Info & Badges */}

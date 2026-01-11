@@ -1,18 +1,22 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, Coins } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useGuild, useGuildTasks } from "@/hooks/useGuilds";
+import { useGuild, useGuildTasks, useMemberReputation } from "@/hooks/useGuilds";
+import { useAccount } from "wagmi";
 import { Address } from "viem";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "./TaskCard";
+import { RewardsSummary } from "./RewardsSummary";
 
 interface TaskViewProps {
   guildAddress?: Address;
 }
 
 const TaskView = ({ guildAddress }: TaskViewProps) => {
+  const { address } = useAccount();
   const { taskCount, isLoading: isLoadingTasks } = useGuildTasks(guildAddress);
   const { completeTask, isPending: isCompleting } = useGuild(guildAddress);
+  const { reputation: guildReputation, isLoading: isLoadingRep } = useMemberReputation(guildAddress, address);
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
 
   const handleCompleteTask = async (taskId: number) => {
@@ -97,6 +101,27 @@ const TaskView = ({ guildAddress }: TaskViewProps) => {
           <h1 className="text-3xl font-bold mb-2">Tasks</h1>
           <p className="text-muted-foreground">Complete tasks to earn rewards and build your reputation</p>
         </div>
+
+        {/* User Balance in Guild */}
+        {address && (
+          <Card variant="glass" className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-5 h-5 text-primary" />
+                  <span className="text-sm text-muted-foreground">Your Reputation in this Guild:</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isLoadingRep ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  ) : (
+                    <span className="text-xl font-bold text-primary">{guildReputation.toLocaleString()} REP</span>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Task Stats */}
         <div className="grid grid-cols-3 gap-4 mb-8">
