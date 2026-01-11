@@ -6,13 +6,24 @@ import { injected, metaMask, walletConnect } from '@wagmi/connectors'
 // Get your project ID from https://cloud.reown.com
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || 'default-project-id'
 
+// Build connectors array
+const connectors = [
+  metaMask(),
+  injected(),
+]
+
+// Only add walletConnect if projectId is valid
+if (projectId && projectId !== 'default-project-id') {
+  connectors.push(
+    walletConnect({ 
+      projectId,
+    })
+  )
+}
+
 export const config = createConfig({
   chains: [arbitrum, arbitrumSepolia],
-  connectors: [
-    metaMask(), // MetaMask first - primary connector
-    injected(), // Fallback for other injected wallets
-    walletConnect({ projectId }), // Mobile wallet support
-  ],
+  connectors,
   transports: {
     [arbitrum.id]: http(),
     [arbitrumSepolia.id]: http(),

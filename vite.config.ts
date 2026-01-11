@@ -14,4 +14,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
+  optimizeDeps: {
+    include: ['wagmi', 'viem', '@wagmi/connectors'],
+  },
 });
