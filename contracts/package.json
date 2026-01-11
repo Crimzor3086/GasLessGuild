@@ -1,0 +1,18 @@
+{
+  "name": "gaslessguild-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for GasLess Guilds",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:arbitrum": "hardhat run scripts/deploy.js --network arbitrum",
+    "deploy:arbitrum-sepolia": "hardhat run scripts/deploy.js --network arbitrumSepolia"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.0.0",
+    "hardhat": "^2.19.0"
+  }
+}
+

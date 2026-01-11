@@ -1,5 +1,15 @@
-import { Wallet } from "lucide-react";
+import { Wallet, Copy, Check, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAccount, useDisconnect, useConnect } from "wagmi";
+import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavbarProps {
   onNavigate: (page: string) => void;
@@ -7,12 +17,33 @@ interface NavbarProps {
 }
 
 const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { connect, connectors } = useConnect();
+  const [copied, setCopied] = useState(false);
+
   const navItems = [
     { id: "home", label: "Home" },
     { id: "dashboard", label: "Dashboard" },
     { id: "tasks", label: "Tasks" },
     { id: "profile", label: "Profile" },
   ];
+
+  const formatAddress = (addr: string) => {
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  const copyAddress = () => {
+    if (address) {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const getExplorerUrl = (addr: string) => {
+    return `https://arbiscan.io/address/${addr}`;
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-glass-border">
@@ -41,10 +72,70 @@ const Navbar = ({ onNavigate, currentPage }: NavbarProps) => {
             ))}
           </div>
 
-          <Button variant="outline" size="default" className="gap-2">
-            <Wallet className="w-4 h-4" />
-            <span className="hidden sm:inline">Connect Wallet</span>
-          </Button>
+          {isConnected && address ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="default" className="gap-2">
+                  <Wallet className="w-4 h-4" />
+                  <span className="hidden sm:inline">{formatAddress(address)}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={copyAddress} className="cursor-pointer">
+                  {copied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy Address
+                    </>
+                  )}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a
+                    href={getExplorerUrl(address)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View on Arbiscan
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => disconnect()} className="cursor-pointer text-destructive">
+                  Disconnect
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="default" className="gap-2">
+                  <Wallet className="w-4 h-4" />
+                  <span className="hidden sm:inline">Connect Wallet</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Connect Wallet</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {connectors.map((connector) => (
+                  <DropdownMenuItem
+                    key={connector.uid}
+                    onClick={() => connect({ connector })}
+                    className="cursor-pointer"
+                  >
+                    {connector.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
     </nav>
