@@ -4,7 +4,7 @@ import { Address } from 'viem'
 
 export function useGuildFactory() {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess: isConfirmed, error: receiptError, data: receipt } = useWaitForTransactionReceipt({
     hash,
   })
 
