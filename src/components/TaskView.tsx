@@ -1,12 +1,13 @@
 import { Loader2, Coins } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useGuild, useGuildTasks, useMemberReputation } from "@/hooks/useGuilds";
+import { useGuild, useGuildTasks, useMemberReputation, useGuildInfo } from "@/hooks/useGuilds";
 import { useAccount } from "wagmi";
 import { Address } from "viem";
 import { useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { TaskCard } from "./TaskCard";
 import { RewardsSummary } from "./RewardsSummary";
+import { CreateTaskDialog } from "./CreateTaskDialog";
 
 interface TaskViewProps {
   guildAddress?: Address;
@@ -17,7 +18,15 @@ const TaskView = ({ guildAddress }: TaskViewProps) => {
   const { taskCount, isLoading: isLoadingTasks } = useGuildTasks(guildAddress);
   const { completeTask, isPending: isCompleting } = useGuild(guildAddress);
   const { reputation: guildReputation, isLoading: isLoadingRep } = useMemberReputation(guildAddress, address);
+  const { guildInfo } = useGuildInfo(guildAddress);
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
+
+  const isMaster = guildInfo?.master?.toLowerCase() === address?.toLowerCase();
+
+  const handleTaskCreated = () => {
+    // Task list will automatically refresh via wagmi's query invalidation
+    // This callback can be used for any additional UI updates if needed
+  };
 
   const handleCompleteTask = async (taskId: number) => {
     if (!guildAddress) {
@@ -97,9 +106,14 @@ const TaskView = ({ guildAddress }: TaskViewProps) => {
     <section className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Tasks</h1>
-          <p className="text-muted-foreground">Complete tasks to earn rewards and build your reputation</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Tasks</h1>
+            <p className="text-muted-foreground">Complete tasks to earn rewards and build your reputation</p>
+          </div>
+          {isMaster && guildAddress && (
+            <CreateTaskDialog guildAddress={guildAddress} onSuccess={handleTaskCreated} />
+          )}
         </div>
 
         {/* User Balance in Guild */}
